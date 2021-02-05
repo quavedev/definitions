@@ -26,8 +26,11 @@ const getTypeName = value => {
   );
 };
 
+const isDbOnly = ({ dbOnly }) => !!dbOnly;
+
 const getFieldsDefinitions = ({ fields, isInput = false }) =>
   Object.entries(fields)
+    .filter(([, value]) => isDbOnly(value))
     .map(([key, value]) => {
       const isOptional =
         value.optional || (isInput && value.graphQLOptionalInput) ? '' : '!';
@@ -36,8 +39,9 @@ const getFieldsDefinitions = ({ fields, isInput = false }) =>
     .join('\n  ');
 
 const getFieldsNames = ({ fields }) =>
-  Object.keys(fields)
-    .map(key => key)
+  Object.entries(fields)
+    .filter(([, value]) => isDbOnly(value))
+    .map(([key]) => key)
     .join('\n  ');
 
 const definitionToInputDef = ({ name, fields }) => `input ${name}Input {
@@ -102,7 +106,7 @@ const v = result => {
   return result;
 };
 export const createModelDefinition = definition => {
-  const name = definition.name;
+  const { name } = definition;
   const nameCamelCase = getNameCamelCase(definition);
   const pluralNameCamelCase = getPluralNameCamelCase(definition);
   const pluralName = getPluralName(definition);
