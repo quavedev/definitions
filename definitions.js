@@ -46,7 +46,10 @@ const getFieldsNames = ({ fields }) =>
 
 const definitionToInputDef = ({ name, fields }) => `input ${name}Input {
   _id: ID
-  ${getFieldsDefinitions({ fields, isInput: true })}
+  ${getFieldsDefinitions({
+    fields,
+    isInput: true,
+  })}
 }`;
 
 const definitionToEnumDef = ({ name, options }) => `enum ${name} {
@@ -195,6 +198,13 @@ export const createModelDefinition = definition => {
     }),
     {}
   );
+
+  const assignFields = newFields =>
+    createModelDefinition({
+      ...definition,
+      fields: Object.assign({}, fields, newFields),
+    });
+
   return {
     rawDefinition: definition,
     fields,
@@ -211,6 +221,7 @@ export const createModelDefinition = definition => {
     graphQLManyQueryCamelCaseName,
     graphQLSaveMutationCamelCaseName,
     graphQLEraseMutationCamelCaseName,
+    assignFields,
     toSimpleSchema,
     toGraphQLFragment,
     toGraphQLType,

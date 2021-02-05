@@ -1,6 +1,6 @@
 Package.describe({
   name: 'quave:definitions',
-  version: '1.0.1',
+  version: '1.0.2',
   summary: 'Utility package to create Model and Enum definitions',
   git: 'https://github.com/quavedev/definitions',
 });
