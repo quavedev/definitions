@@ -30,7 +30,7 @@ const isDbOnly = ({ dbOnly }) => !!dbOnly;
 
 const getFieldsDefinitions = ({ fields, isInput = false }) =>
   Object.entries(fields)
-    .filter(([, value]) => isDbOnly(value))
+    .filter(([, value]) => !isDbOnly(value))
     .map(([key, value]) => {
       const isOptional =
         value.optional || (isInput && value.graphQLOptionalInput) ? '' : '!';
@@ -40,7 +40,7 @@ const getFieldsDefinitions = ({ fields, isInput = false }) =>
 
 const getFieldsNames = ({ fields }) =>
   Object.entries(fields)
-    .filter(([, value]) => isDbOnly(value))
+    .filter(([, value]) => !isDbOnly(value))
     .map(([key]) => key)
     .join('\n  ');
 
@@ -76,7 +76,14 @@ const definitionToSimpleSchema = definition =>
       acc,
       [
         fieldName,
-        { graphQLType, graphQLOptionalInput, typeName, customType, ...item },
+        {
+          graphQLType,
+          graphQLOptionalInput,
+          typeName,
+          customType,
+          dbOnly,
+          ...item
+        },
       ]
     ) => ({
       ...acc,
@@ -238,7 +245,7 @@ export const createModelDefinition = definition => {
 
 export const createEnumDefinition = definition => {
   const allowedValues = () => Object.keys(definition.options);
-  const name = definition.name;
+  const { name } = definition;
   const toSimpleSchemaField = () => ({
     type: String,
     allowedValues: allowedValues(),
