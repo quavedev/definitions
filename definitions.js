@@ -12,9 +12,14 @@ const getTypeName = value => {
   if (value.type instanceof String) {
     return value.type;
   }
+  if (value.type instanceof Number) {
+    return 'Float';
+  }
   if (value.type.name) {
     return typeof value.type.name === 'function'
       ? value.type.name()
+      : value.type.name === 'Number'
+      ? 'Float'
       : value.type.name;
   }
   const stringType = value.type.toString();
