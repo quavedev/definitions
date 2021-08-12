@@ -134,10 +134,14 @@ export const createModelDefinition = definition => {
   const fullFragmentName = `${name}Full`;
   const graphQLOneQueryName = name;
   const graphQLManyQueryName = pluralName;
+  const graphQLPaginatedQueryName = `paginated${pluralName}`;
   const graphQLSaveMutationName = `Save${name}`;
   const graphQLEraseMutationName = `Erase${name}`;
   const graphQLOneQueryCamelCaseName = toCamelCase(graphQLOneQueryName);
   const graphQLManyQueryCamelCaseName = toCamelCase(graphQLManyQueryName);
+  const graphQLPaginatedQueryCamelCaseName = toCamelCase(
+    graphQLPaginatedQueryName
+  );
   const graphQLSaveMutationCamelCaseName = toCamelCase(graphQLSaveMutationName);
   const graphQLEraseMutationCamelCaseName = toCamelCase(
     graphQLEraseMutationName
@@ -147,6 +151,7 @@ export const createModelDefinition = definition => {
         type Query {
           ${graphQLOneQueryCamelCaseName}(_id: ID!): ${name}
           ${graphQLManyQueryCamelCaseName}: [${name}]
+          ${graphQLPaginatedQueryCamelCaseName}(paginationAction: PaginationActionInput): ${graphQLPaginatedQueryCamelCaseName}
         }      
       `;
   const toGraphQLMutations = () => `
@@ -171,6 +176,37 @@ export const createModelDefinition = definition => {
       }
       ${fullFragment}
     `;
+  const toGraphQLPaginatedQuery = () => `
+      query ${graphQLPaginatedQueryName}($paginationAction: PaginationActionInput) {
+        ${graphQLPaginatedQueryCamelCaseName}(paginationAction: $paginationAction) {
+          pagination {
+            total
+            currentPage
+            totalPages
+            next {
+              skip
+              limit
+            }
+            previous {
+              skip
+              limit
+            }
+            first {
+              skip
+              limit
+            }
+            last {
+              skip
+              limit
+            }
+          }
+          items {
+            ...${fullFragmentName}
+          }
+        }
+      }
+      ${fullFragment}
+    `;
   const toGraphQLSaveMutation = () => `
       mutation ${graphQLSaveMutationName}($${nameCamelCase}: ${name}Input!) {
         save${name}(${nameCamelCase}: $${nameCamelCase}) {
@@ -189,12 +225,37 @@ export const createModelDefinition = definition => {
     `;
   const toGraphQL = () =>
     v(`    
-        ${toGraphQLType(definition)}
-        ${toGraphQLInput(definition)}
-        ${toGraphQLFragment(definition)}
-        ${toGraphQLQueries(definition)}
-        ${toGraphQLMutations(definition)}
-  `);
+      input PaginationActionInput {
+        skip: Int
+        limit: Int
+      }
+      
+      type PaginationAction {
+        skip: Int
+        limit: Int
+      }
+      
+      type Pagination {
+        previous: PaginationAction
+        next: PaginationAction
+        first: PaginationAction
+        last: PaginationAction
+        total: Int!
+        currentPage: Int!
+        totalPages: Int!
+      }
+      
+      type ${graphQLPaginatedQueryCamelCaseName} {
+        pagination: Pagination
+        items: [${name}]
+      }
+    
+      ${toGraphQLType(definition)}
+      ${toGraphQLInput(definition)}
+      ${toGraphQLFragment(definition)}
+      ${toGraphQLQueries(definition)}
+      ${toGraphQLMutations(definition)}
+    `);
   const fields = Object.entries(definition.fields).reduce(
     (acc, [key, value]) => ({
       ...acc,
@@ -226,6 +287,7 @@ export const createModelDefinition = definition => {
     graphQLEraseMutationName,
     graphQLOneQueryCamelCaseName,
     graphQLManyQueryCamelCaseName,
+    graphQLPaginatedQueryCamelCaseName,
     graphQLSaveMutationCamelCaseName,
     graphQLEraseMutationCamelCaseName,
     assignFields,
@@ -237,6 +299,7 @@ export const createModelDefinition = definition => {
     toGraphQLMutations,
     toGraphQL,
     toGraphQLManyQuery,
+    toGraphQLPaginatedQuery,
     toGraphQLOneQuery,
     toGraphQLSaveMutation,
     toGraphQLEraseMutation,
