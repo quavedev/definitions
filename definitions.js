@@ -273,6 +273,7 @@ export const createModelDefinition = definition => {
     fullFragmentName,
     graphQLOneQueryName,
     graphQLManyQueryName,
+    graphQLPaginatedQueryName,
     graphQLSaveMutationName,
     graphQLEraseMutationName,
     graphQLOneQueryCamelCaseName,
