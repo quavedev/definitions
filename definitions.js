@@ -130,11 +130,35 @@ export const createModelDefinition = definition => {
   const toGraphQLType = () => definitionToTypeDef(definition);
   const toGraphQLInput = () => definitionToInputDef(definition);
   const fullFragment = toGraphQLFragment();
+  const paginationFragments = `
+    fragment PaginationActionFull on PaginationAction {
+      skip
+      limit
+    }
+    
+    fragment PaginationFull on Pagination {
+      total
+      currentPage
+      totalPages
+      previous {
+        ...PaginationActionFull
+      }
+      next {
+        ...PaginationActionFull
+      }
+      first {
+        ...PaginationActionFull
+      }
+      last {
+        ...PaginationActionFull
+      }
+    }
+  `;
 
   const fullFragmentName = `${name}Full`;
   const graphQLOneQueryName = name;
   const graphQLManyQueryName = pluralName;
-  const graphQLPaginatedQueryName = `paginated${pluralName}`;
+  const graphQLPaginatedQueryName = `${pluralName}Paginated`;
   const graphQLSaveMutationName = `Save${name}`;
   const graphQLEraseMutationName = `Erase${name}`;
   const graphQLOneQueryCamelCaseName = toCamelCase(graphQLOneQueryName);
@@ -147,11 +171,17 @@ export const createModelDefinition = definition => {
     graphQLEraseMutationName
   );
 
+  const toGraphQLPaginatedType = () => `
+      type ${graphQLPaginatedQueryName} {
+        pagination: Pagination
+        items: [${name}]
+      }
+  `;
   const toGraphQLQueries = () => `
         type Query {
           ${graphQLOneQueryCamelCaseName}(_id: ID!): ${name}
           ${graphQLManyQueryCamelCaseName}: [${name}]
-          ${graphQLPaginatedQueryCamelCaseName}(paginationAction: PaginationActionInput): ${graphQLPaginatedQueryCamelCaseName}
+          ${graphQLPaginatedQueryCamelCaseName}(paginationAction: PaginationActionInput): ${graphQLPaginatedQueryName}
         }      
       `;
   const toGraphQLMutations = () => `
@@ -180,31 +210,14 @@ export const createModelDefinition = definition => {
       query ${graphQLPaginatedQueryName}($paginationAction: PaginationActionInput) {
         ${graphQLPaginatedQueryCamelCaseName}(paginationAction: $paginationAction) {
           pagination {
-            total
-            currentPage
-            totalPages
-            next {
-              skip
-              limit
-            }
-            previous {
-              skip
-              limit
-            }
-            first {
-              skip
-              limit
-            }
-            last {
-              skip
-              limit
-            }
+            ...PaginationFull
           }
           items {
             ...${fullFragmentName}
           }
         }
       }
+      ${paginationFragments}
       ${fullFragment}
     `;
   const toGraphQLSaveMutation = () => `
@@ -225,31 +238,8 @@ export const createModelDefinition = definition => {
     `;
   const toGraphQL = () =>
     v(`    
-      input PaginationActionInput {
-        skip: Int
-        limit: Int
-      }
-      
-      type PaginationAction {
-        skip: Int
-        limit: Int
-      }
-      
-      type Pagination {
-        previous: PaginationAction
-        next: PaginationAction
-        first: PaginationAction
-        last: PaginationAction
-        total: Int!
-        currentPage: Int!
-        totalPages: Int!
-      }
-      
-      type ${graphQLPaginatedQueryCamelCaseName} {
-        pagination: Pagination
-        items: [${name}]
-      }
-    
+      ${commonTypeDefs}
+      ${toGraphQLPaginatedType()}
       ${toGraphQLType(definition)}
       ${toGraphQLInput(definition)}
       ${toGraphQLFragment(definition)}
@@ -336,3 +326,25 @@ export const createEnumDefinition = definition => {
     toEnum,
   };
 };
+
+export const commonTypeDefs = `
+  input PaginationActionInput {
+    skip: Int
+    limit: Int
+  }
+  
+  type PaginationAction {
+    skip: Int
+    limit: Int
+  }
+  
+  type Pagination {
+    previous: PaginationAction
+    next: PaginationAction
+    first: PaginationAction
+    last: PaginationAction
+    total: Int!
+    currentPage: Int!
+    totalPages: Int!
+  }
+`;
