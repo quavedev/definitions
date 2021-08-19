@@ -135,23 +135,58 @@ export const createModelDefinition = definition => {
   const toGraphQLType = () => definitionToTypeDef(definition);
   const toGraphQLInput = () => definitionToInputDef(definition);
   const fullFragment = toGraphQLFragment();
+  const paginationFragments = `
+    fragment PaginationActionFull on PaginationAction {
+      skip
+      limit
+    }
+    
+    fragment PaginationFull on Pagination {
+      total
+      currentPage
+      totalPages
+      previous {
+        ...PaginationActionFull
+      }
+      next {
+        ...PaginationActionFull
+      }
+      first {
+        ...PaginationActionFull
+      }
+      last {
+        ...PaginationActionFull
+      }
+    }
+  `;
 
   const fullFragmentName = `${name}Full`;
   const graphQLOneQueryName = name;
   const graphQLManyQueryName = pluralName;
+  const graphQLPaginatedQueryName = `${pluralName}Paginated`;
   const graphQLSaveMutationName = `Save${name}`;
   const graphQLEraseMutationName = `Erase${name}`;
   const graphQLOneQueryCamelCaseName = toCamelCase(graphQLOneQueryName);
   const graphQLManyQueryCamelCaseName = toCamelCase(graphQLManyQueryName);
+  const graphQLPaginatedQueryCamelCaseName = toCamelCase(
+    graphQLPaginatedQueryName
+  );
   const graphQLSaveMutationCamelCaseName = toCamelCase(graphQLSaveMutationName);
   const graphQLEraseMutationCamelCaseName = toCamelCase(
     graphQLEraseMutationName
   );
 
+  const toGraphQLPaginatedType = () => `
+      type ${graphQLPaginatedQueryName} {
+        pagination: Pagination
+        items: [${name}]
+      }
+  `;
   const toGraphQLQueries = () => `
         type Query {
           ${graphQLOneQueryCamelCaseName}(_id: ID!): ${name}
           ${graphQLManyQueryCamelCaseName}: [${name}]
+          ${graphQLPaginatedQueryCamelCaseName}(paginationAction: PaginationActionInput): ${graphQLPaginatedQueryName}
         }      
       `;
   const toGraphQLMutations = () => `
@@ -176,6 +211,20 @@ export const createModelDefinition = definition => {
       }
       ${fullFragment}
     `;
+  const toGraphQLPaginatedQuery = () => `
+      query ${graphQLPaginatedQueryName}($paginationAction: PaginationActionInput) {
+        ${graphQLPaginatedQueryCamelCaseName}(paginationAction: $paginationAction) {
+          pagination {
+            ...PaginationFull
+          }
+          items {
+            ...${fullFragmentName}
+          }
+        }
+      }
+      ${paginationFragments}
+      ${fullFragment}
+    `;
   const toGraphQLSaveMutation = () => `
       mutation ${graphQLSaveMutationName}($${nameCamelCase}: ${name}Input!) {
         save${name}(${nameCamelCase}: $${nameCamelCase}) {
@@ -194,12 +243,14 @@ export const createModelDefinition = definition => {
     `;
   const toGraphQL = () =>
     v(`    
-        ${toGraphQLType(definition)}
-        ${toGraphQLInput(definition)}
-        ${toGraphQLFragment(definition)}
-        ${toGraphQLQueries(definition)}
-        ${toGraphQLMutations(definition)}
-  `);
+      ${commonTypeDefs}
+      ${toGraphQLPaginatedType()}
+      ${toGraphQLType(definition)}
+      ${toGraphQLInput(definition)}
+      ${toGraphQLFragment(definition)}
+      ${toGraphQLQueries(definition)}
+      ${toGraphQLMutations(definition)}
+    `);
   const fields = Object.entries(definition.fields).reduce(
     (acc, [key, value]) => ({
       ...acc,
@@ -227,10 +278,12 @@ export const createModelDefinition = definition => {
     fullFragmentName,
     graphQLOneQueryName,
     graphQLManyQueryName,
+    graphQLPaginatedQueryName,
     graphQLSaveMutationName,
     graphQLEraseMutationName,
     graphQLOneQueryCamelCaseName,
     graphQLManyQueryCamelCaseName,
+    graphQLPaginatedQueryCamelCaseName,
     graphQLSaveMutationCamelCaseName,
     graphQLEraseMutationCamelCaseName,
     assignFields,
@@ -242,6 +295,7 @@ export const createModelDefinition = definition => {
     toGraphQLMutations,
     toGraphQL,
     toGraphQLManyQuery,
+    toGraphQLPaginatedQuery,
     toGraphQLOneQuery,
     toGraphQLSaveMutation,
     toGraphQLEraseMutation,
@@ -278,3 +332,25 @@ export const createEnumDefinition = definition => {
     toEnum,
   };
 };
+
+export const commonTypeDefs = `
+  input PaginationActionInput {
+    skip: Int
+    limit: Int
+  }
+  
+  type PaginationAction {
+    skip: Int
+    limit: Int
+  }
+  
+  type Pagination {
+    previous: PaginationAction
+    next: PaginationAction
+    first: PaginationAction
+    last: PaginationAction
+    total: Int!
+    currentPage: Int!
+    totalPages: Int!
+  }
+`;
