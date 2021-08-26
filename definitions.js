@@ -136,26 +136,26 @@ export const createModelDefinition = definition => {
   const toGraphQLInput = () => definitionToInputDef(definition);
   const fullFragment = toGraphQLFragment();
   const paginationFragments = `
-    fragment PaginationActionFull on PaginationAction {
+    fragment PaginationFull on Pagination {
       skip
       limit
     }
     
-    fragment PaginationFull on Pagination {
+    fragment PaginationInfoFull on PaginationInfo {
       total
       currentPage
       totalPages
       previous {
-        ...PaginationActionFull
+        ...PaginationFull
       }
       next {
-        ...PaginationActionFull
+        ...PaginationFull
       }
       first {
-        ...PaginationActionFull
+        ...PaginationFull
       }
       last {
-        ...PaginationActionFull
+        ...PaginationFull
       }
     }
   `;
@@ -178,7 +178,7 @@ export const createModelDefinition = definition => {
 
   const toGraphQLPaginatedType = () => `
       type ${graphQLPaginatedQueryName} {
-        pagination: Pagination
+        pagination: PaginationInfo
         items: [${name}]
       }
   `;
@@ -186,7 +186,7 @@ export const createModelDefinition = definition => {
         type Query {
           ${graphQLOneQueryCamelCaseName}(_id: ID!): ${name}
           ${graphQLManyQueryCamelCaseName}: [${name}]
-          ${graphQLPaginatedQueryCamelCaseName}(paginationAction: PaginationActionInput, search: String): ${graphQLPaginatedQueryName}
+          ${graphQLPaginatedQueryCamelCaseName}(pagination: PaginationInput, search: String): ${graphQLPaginatedQueryName}
         }      
       `;
   const toGraphQLMutations = () => `
@@ -212,10 +212,10 @@ export const createModelDefinition = definition => {
       ${fullFragment}
     `;
   const toGraphQLPaginatedQuery = () => `
-      query ${graphQLPaginatedQueryName}($paginationAction: PaginationActionInput, $search: String) {
-        ${graphQLPaginatedQueryCamelCaseName}(paginationAction: $paginationAction, search: $search) {
+      query ${graphQLPaginatedQueryName}($pagination: PaginationInput, $search: String) {
+        ${graphQLPaginatedQueryCamelCaseName}(pagination: $pagination, search: $search) {
           pagination {
-            ...PaginationFull
+            ...PaginationInfoFull
           }
           items {
             ...${fullFragmentName}
@@ -334,21 +334,21 @@ export const createEnumDefinition = definition => {
 };
 
 export const commonTypeDefs = `
-  input PaginationActionInput {
-    skip: Int
-    limit: Int
-  }
-  
-  type PaginationAction {
+  input PaginationInput {
     skip: Int
     limit: Int
   }
   
   type Pagination {
-    previous: PaginationAction
-    next: PaginationAction
-    first: PaginationAction
-    last: PaginationAction
+    skip: Int
+    limit: Int
+  }
+  
+  type PaginationInfo {
+    previous: Pagination
+    next: Pagination
+    first: Pagination
+    last: Pagination
     total: Int!
     currentPage: Int!
     totalPages: Int!
