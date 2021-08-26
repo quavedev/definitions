@@ -186,7 +186,7 @@ export const createModelDefinition = definition => {
         type Query {
           ${graphQLOneQueryCamelCaseName}(_id: ID!): ${name}
           ${graphQLManyQueryCamelCaseName}: [${name}]
-          ${graphQLPaginatedQueryCamelCaseName}(paginationAction: PaginationActionInput): ${graphQLPaginatedQueryName}
+          ${graphQLPaginatedQueryCamelCaseName}(paginationAction: PaginationActionInput, search: String): ${graphQLPaginatedQueryName}
         }      
       `;
   const toGraphQLMutations = () => `
@@ -212,8 +212,8 @@ export const createModelDefinition = definition => {
       ${fullFragment}
     `;
   const toGraphQLPaginatedQuery = () => `
-      query ${graphQLPaginatedQueryName}($paginationAction: PaginationActionInput) {
-        ${graphQLPaginatedQueryCamelCaseName}(paginationAction: $paginationAction) {
+      query ${graphQLPaginatedQueryName}($paginationAction: PaginationActionInput, $search: String) {
+        ${graphQLPaginatedQueryCamelCaseName}(paginationAction: $paginationAction, search: $search) {
           pagination {
             ...PaginationFull
           }
