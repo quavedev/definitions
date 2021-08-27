@@ -178,7 +178,7 @@ export const createModelDefinition = definition => {
 
   const toGraphQLPaginatedType = () => `
       type ${graphQLPaginatedQueryName} {
-        pagination: PaginationInfo
+        paginationInfo: PaginationInfo
         items: [${name}]
       }
   `;
@@ -214,7 +214,7 @@ export const createModelDefinition = definition => {
   const toGraphQLPaginatedQuery = () => `
       query ${graphQLPaginatedQueryName}($pagination: PaginationInput, $search: String) {
         ${graphQLPaginatedQueryCamelCaseName}(pagination: $pagination, search: $search) {
-          pagination {
+          paginationInfo {
             ...PaginationInfoFull
           }
           items {
