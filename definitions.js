@@ -186,7 +186,7 @@ export const createModelDefinition = definition => {
         type Query {
           ${graphQLOneQueryCamelCaseName}(_id: ID!): ${name}
           ${graphQLManyQueryCamelCaseName}: [${name}]
-          ${graphQLPaginatedQueryCamelCaseName}(pagination: PaginationInput, search: String): ${graphQLPaginatedQueryName}
+          ${graphQLPaginatedQueryCamelCaseName}(pagination: PaginationInput, search: String, sort: JSON): ${graphQLPaginatedQueryName}
         }      
       `;
   const toGraphQLMutations = () => `
@@ -212,8 +212,8 @@ export const createModelDefinition = definition => {
       ${fullFragment}
     `;
   const toGraphQLPaginatedQuery = () => `
-      query ${graphQLPaginatedQueryName}($pagination: PaginationInput, $search: String) {
-        ${graphQLPaginatedQueryCamelCaseName}(pagination: $pagination, search: $search) {
+      query ${graphQLPaginatedQueryName}($pagination: PaginationInput, $search: String, $sort: JSON) {
+        ${graphQLPaginatedQueryCamelCaseName}(pagination: $pagination, search: $search, sort: $sort) {
           paginationInfo {
             ...PaginationInfoFull
           }
@@ -334,6 +334,8 @@ export const createEnumDefinition = definition => {
 };
 
 export const commonTypeDefs = `
+  scalar JSON
+
   input PaginationInput {
     skip: Int
     limit: Int
